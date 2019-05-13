@@ -50,7 +50,7 @@ int32_t main(int32_t argc, char **argv)
 
     CURL *curl = curl_easy_init();
 
-    curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+    curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
     curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1);
 
     auto onRemoteMessageRequest{[&curl, &url, &user, &password, &senderStamp,
@@ -62,11 +62,15 @@ int32_t main(int32_t argc, char **argv)
 
           std::string address = msg.address();
           std::string message = msg.message();
-    
+          
+          char *messageEncoded = curl_easy_escape(curl, message.c_str(), 
+              message.length());
           std::string cmd = url + "/cgi-bin/sms_send?username=" + user 
-            + "&password=" + password + "&number=" + address + "&text=" + message;
-          curl_easy_setopt(curl, CURLOPT_URL, cmd.c_str());
+            + "&password=" + password + "&number=" + address + "&text=" 
+            + std::string(messageEncoded);
+          curl_free(messageEncoded);
 
+          curl_easy_setopt(curl, CURLOPT_URL, cmd.c_str());
           curl_easy_perform(curl);
 
           if (verbose) {
